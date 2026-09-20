@@ -26,6 +26,7 @@ export default function ImageItem({
   width,
 }: ImageItemProps) {
   const [loadedImage, setLoadedImage] = useState<string | null>(null);
+  const [imageLoadError, setImageLoadError] = useState(false);
   const isImageLoaded = loadedImage === tile.item.image;
   const tileHeight = getMasonryTileHeight(tile.id, maxHeight);
 
@@ -58,24 +59,30 @@ export default function ImageItem({
         width,
       }}
     >
-      {!isImageLoaded ? (
+      {!isImageLoaded && !imageLoadError ? (
         <div
           aria-hidden="true"
           className="absolute inset-0 animate-pulse bg-zinc-200/80 dark:bg-zinc-800/80"
         />
       ) : null}
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        alt=""
-        className="block h-full w-full select-none object-cover"
-        draggable={false}
-        onError={() => setLoadedImage(tile.item.image)}
-        onLoad={() => {
-          setLoadedImage(tile.item.image);
-          onImageLoad();
-        }}
-        src={tile.item.image}
-      />
+      {imageLoadError ? (
+        <div className="flex h-full w-full items-center justify-center px-4 text-center text-sm text-zinc-500 dark:text-zinc-400">
+          Image unavailable
+        </div>
+      ) : (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          alt={itemLabel || ""}
+          className="block h-full w-full select-none object-cover"
+          draggable={false}
+          onError={() => setImageLoadError(true)}
+          onLoad={() => {
+            setLoadedImage(tile.item.image);
+            onImageLoad();
+          }}
+          src={tile.item.image}
+        />
+      )}
       {hasMetadata ? (
         <figcaption className="absolute inset-x-0 bottom-0 bg-linear-to-t from-black/70 to-transparent p-3 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
           {tile.item.location ? (

@@ -28,7 +28,7 @@ export default async function ManageImagesPage() {
 
   return (
     <main className="grid min-h-svh place-items-center overflow-auto px-4 py-8">
-      <div className="flex w-full max-w-sm flex-col gap-4">
+      <div className="flex w-full max-w-2xl flex-col gap-4">
         <header className="flex items-start justify-between gap-4 px-1">
           <div>
             <h1 className="text-xl font-semibold tracking-tight">Image manager</h1>

@@ -1,5 +1,6 @@
 import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+import sharp from "sharp";
 
 const accountId = process.env.CLOUDFLARE_R2_ACCOUNT_ID;
 const accessKeyId = process.env.CLOUDFLARE_R2_ACCESS_KEY_ID;
@@ -66,17 +67,26 @@ export async function uploadImage(input: {
   contentType: string;
   key: string;
 }) {
+  const isHeic =
+    input.contentType === "image/heic" || input.contentType === "image/heif";
+  const body = isHeic
+    ? await sharp(input.body).jpeg({ quality: 90 }).toBuffer()
+    : input.body;
+  const key = isHeic
+    ? input.key.replace(/\.(?:heic|heif)$/i, ".jpg")
+    : input.key;
+
   await getR2Client().send(
     new PutObjectCommand({
-      Body: input.body,
+      Body: body,
       Bucket: getR2Bucket(),
-      ContentType: input.contentType,
-      Key: input.key,
+      ContentType: isHeic ? "image/jpeg" : input.contentType,
+      Key: key,
     }),
   );
 
   return {
-    key: input.key,
-    publicUrl: getR2PublicUrl(input.key),
+    key,
+    publicUrl: getR2PublicUrl(key),
   };
 }

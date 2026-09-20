@@ -26,7 +26,14 @@ export async function GET(request: NextRequest) {
     },
   });
 
-  return Response.json({ images: rows });
+  return Response.json({
+    images: rows.map((row) => ({
+      ...row,
+      imageUrl: /\.(?:heic|heif)(?:[?#].*)?$/i.test(row.imageUrl)
+        ? `/api/infinite-images/${row.id}/image`
+        : row.imageUrl,
+    })),
+  });
 }
 
 export async function POST(request: Request) {

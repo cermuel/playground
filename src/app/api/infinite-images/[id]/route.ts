@@ -8,6 +8,7 @@ import {
   readJsonObject,
   requiredString,
 } from "@/lib/api";
+import { getAdminSession } from "@/lib/auth";
 
 export const runtime = "nodejs";
 
@@ -33,6 +34,12 @@ export async function GET(_request: Request, { params }: ImageContext) {
 }
 
 export async function PATCH(request: Request, { params }: ImageContext) {
+  const session = await getAdminSession();
+
+  if (!session) {
+    return jsonError("Unauthorized.", 401);
+  }
+
   const { id } = await params;
   const body = await readJsonObject(request);
   const db = getDb();
@@ -94,6 +101,12 @@ export async function PATCH(request: Request, { params }: ImageContext) {
 }
 
 export async function DELETE(_request: Request, { params }: ImageContext) {
+  const session = await getAdminSession();
+
+  if (!session) {
+    return jsonError("Unauthorized.", 401);
+  }
+
   const { id } = await params;
   const db = getDb();
   const now = new Date();
