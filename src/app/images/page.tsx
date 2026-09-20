@@ -17,6 +17,7 @@ import {
   EXPANDED_IMAGE_CLOSE_MS,
   GAP,
   INITIAL_GALLERY_LAYOUT,
+  MAX_SHEET_COLUMNS,
   SKELETON_ASPECT_RATIOS,
 } from "@/constants/images";
 import type {
@@ -90,9 +91,17 @@ export default function Images() {
 
   useEffect(() => {
     const updateLayout = () => {
-      const columns = getColumnCount();
+      const visibleColumns = getColumnCount();
+      const availableItems = isLoading
+        ? SKELETON_ASPECT_RATIOS.length
+        : galleryItems.length;
+      const columns = Math.min(
+        MAX_SHEET_COLUMNS,
+        Math.max(visibleColumns, availableItems),
+      );
       const colWidth =
-        (window.innerWidth - EDGE_GAP * 2 - GAP * (columns - 1)) / columns;
+        (window.innerWidth - EDGE_GAP * 2 - GAP * (visibleColumns - 1)) /
+        visibleColumns;
       const sheetWidth = columns * colWidth + GAP * (columns - 1);
       const itemsPerColumn = Math.max(
         4,
@@ -113,7 +122,7 @@ export default function Images() {
     window.addEventListener("resize", updateLayout);
 
     return () => window.removeEventListener("resize", updateLayout);
-  }, []);
+  }, [galleryItems.length, isLoading]);
 
   const columns = useMemo(() => {
     const items = isLoading
