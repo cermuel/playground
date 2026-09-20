@@ -31,6 +31,7 @@ export type GalleryLayout = {
   colWidth: number;
   columns: number;
   itemsPerColumn: number;
+  maxImageHeight: number;
   sheetHeight: number;
   sheetWidth: number;
 };

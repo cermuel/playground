@@ -100,14 +100,12 @@ export default function Images() {
         Math.ceil(window.innerHeight / colWidth) * 3,
       );
 
-      setLayout((currentLayout) => ({
+      setLayout(() => ({
         colWidth,
         columns,
         itemsPerColumn,
-        sheetHeight: Math.max(
-          currentLayout.sheetHeight,
-          window.innerHeight * 2,
-        ),
+        maxImageHeight: window.innerHeight * 0.45,
+        sheetHeight: window.innerHeight * 2,
         sheetWidth,
       }));
     };
@@ -164,7 +162,10 @@ export default function Images() {
               : currentLayout.sheetHeight;
           },
         );
-        const sheetHeight = Math.max(...nextColumnHeights);
+        const sheetHeight = Math.max(
+          window.innerHeight * 2,
+          ...nextColumnHeights,
+        );
 
         columnHeightsRef.current = nextColumnHeights;
         setColumnHeights((currentHeights) => {
@@ -197,7 +198,7 @@ export default function Images() {
       .forEach((column) => resizeObserver.observe(column));
 
     return () => resizeObserver.disconnect();
-  }, [columns]);
+  }, [columns, layout.colWidth, layout.maxImageHeight]);
 
   useEffect(() => {
     let frame = 0;

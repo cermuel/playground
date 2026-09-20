@@ -1,8 +1,12 @@
 "use client";
 
-import type { KeyboardEvent } from "react";
+import { useState, type KeyboardEvent } from "react";
 import type { GalleryItem, GalleryTile } from "@/types/image";
-import { getItemLabel, hasItemMetadata } from "@/utils/image.helpers";
+import {
+  getItemLabel,
+  getMasonryTileHeight,
+  hasItemMetadata,
+} from "@/utils/image.helpers";
 
 type ImageItemProps = {
   isSkeleton?: boolean;
@@ -21,13 +25,17 @@ export default function ImageItem({
   tile,
   width,
 }: ImageItemProps) {
+  const [loadedImage, setLoadedImage] = useState<string | null>(null);
+  const isImageLoaded = loadedImage === tile.item.image;
+  const tileHeight = getMasonryTileHeight(tile.id, maxHeight);
+
   if (isSkeleton) {
     return (
       <div
         aria-hidden="true"
         className="animate-pulse rounded-xl bg-zinc-200/80 dark:bg-zinc-800/80"
         style={{
-          height: width * (tile.item.aspectRatio ?? 1),
+          height: tileHeight,
           width,
         }}
       />
@@ -40,22 +48,32 @@ export default function ImageItem({
   return (
     <figure
       aria-label={itemLabel || "Open image"}
-      className="group relative overflow-hidden rounded-xl bg-zinc-200 transition-transform duration-150 active:scale-[0.96] dark:bg-zinc-800"
+      className="group relative m-0 overflow-hidden rounded-xl bg-zinc-200 transition-transform duration-150 active:scale-[0.96] dark:bg-zinc-800"
       data-item-index={tile.itemIndex}
       onKeyDown={(event) => onKeyDown(event, tile.item)}
       role="button"
       tabIndex={0}
       style={{
-        maxHeight,
+        height: tileHeight,
         width,
       }}
     >
+      {!isImageLoaded ? (
+        <div
+          aria-hidden="true"
+          className="absolute inset-0 animate-pulse bg-zinc-200/80 dark:bg-zinc-800/80"
+        />
+      ) : null}
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         alt=""
-        className="block h-auto w-full select-none"
+        className="block h-full w-full select-none object-cover"
         draggable={false}
-        onLoad={onImageLoad}
+        onError={() => setLoadedImage(tile.item.image)}
+        onLoad={() => {
+          setLoadedImage(tile.item.image);
+          onImageLoad();
+        }}
         src={tile.item.image}
       />
       {hasMetadata ? (

@@ -1,4 +1,7 @@
-import { COLUMNS_BY_BREAKPOINT } from "@/constants/images";
+import {
+  COLUMNS_BY_BREAKPOINT,
+  MASONRY_HEIGHT_RATIOS,
+} from "@/constants/images";
 import type { Bounds, ExpandedImage, GalleryItem } from "@/types/image";
 
 export const wrap = (value: number, size: number) =>
@@ -44,6 +47,17 @@ export const pickItemIndex = (
   // Lay items out row-major so a viewport-sized group of tiles never repeats
   // an image just because it happens to land in a different column.
   return (row * columnCount + col) % itemCount;
+};
+
+export const getMasonryTileHeight = (id: string, maxHeight: number) => {
+  const hash = Array.from(id).reduce(
+    (value, character) => (value * 31 + character.charCodeAt(0)) % 997,
+    7,
+  );
+
+  return Math.round(
+    maxHeight * MASONRY_HEIGHT_RATIOS[hash % MASONRY_HEIGHT_RATIOS.length],
+  );
 };
 
 export const getItemLabel = (item: GalleryItem) => {

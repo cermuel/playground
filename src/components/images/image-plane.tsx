@@ -77,7 +77,7 @@ export default function ImagePlane({
                     <ImageItem
                       isSkeleton={isLoading}
                       key={`${copyX}:${col}:${columnCopy}:${tile.id}`}
-                      maxHeight={layout.colWidth * 1.58}
+                      maxHeight={layout.maxImageHeight}
                       onImageLoad={onImageLoad}
                       onKeyDown={onTileKeyDown}
                       tile={tile}
