@@ -1,5 +1,6 @@
 "use client";
 
+import axios from "axios";
 import {
   KeyboardEvent,
   useCallback,
@@ -15,8 +16,8 @@ import {
   EDGE_GAP,
   EXPANDED_IMAGE_CLOSE_MS,
   GAP,
-  GALLERY_ITEMS,
   INITIAL_GALLERY_LAYOUT,
+  SKELETON_ASPECT_RATIOS,
 } from "@/constants/images";
 import type {
   ExpandedImage,
@@ -49,7 +50,44 @@ export default function Images() {
   const [expandedImage, setExpandedImage] = useState<ExpandedImage | null>(
     null,
   );
+  const [galleryItems, setGalleryItems] = useState<GalleryItem[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [layout, setLayout] = useState<GalleryLayout>(INITIAL_GALLERY_LAYOUT);
+
+  useEffect(() => {
+    const controller = new AbortController();
+
+    axios
+      .get<{
+        images: Array<{
+          imageUrl: string;
+          description: string | null;
+          location: { name: string } | null;
+        }>;
+      }>("/api/infinite-images", { signal: controller.signal })
+      .then(({ data }) => {
+        const uniqueImages = Array.from(
+          new Map(data.images.map((image) => [image.imageUrl, image])).values(),
+        );
+
+        setGalleryItems(
+          uniqueImages.map((image) => ({
+            image: image.imageUrl,
+            location: image.location?.name,
+          })),
+        );
+        setLoadError(null);
+      })
+      .catch((error) => {
+        if (!axios.isCancel(error)) {
+          setLoadError("Unable to load images.");
+        }
+      })
+      .finally(() => setIsLoading(false));
+
+    return () => controller.abort();
+  }, []);
 
   useEffect(() => {
     const updateLayout = () => {
@@ -81,18 +119,32 @@ export default function Images() {
   }, []);
 
   const columns = useMemo(() => {
+    const items = isLoading
+      ? SKELETON_ASPECT_RATIOS.map((aspectRatio) => ({
+          aspectRatio,
+          image: "",
+        }))
+      : galleryItems;
+
+    if (!items.length) return [];
+
     return Array.from({ length: layout.columns }, (_, col) => {
       return Array.from({ length: layout.itemsPerColumn }, (_, index) => {
-        const itemIndex = pickItemIndex(col, index);
+        const itemIndex = pickItemIndex(
+          col,
+          index,
+          layout.columns,
+          items.length,
+        );
 
         return {
           id: `${col}-${index}`,
-          item: GALLERY_ITEMS[itemIndex],
+          item: items[itemIndex],
           itemIndex,
         } satisfies GalleryTile;
       });
     });
-  }, [layout.columns, layout.itemsPerColumn]);
+  }, [galleryItems, isLoading, layout.columns, layout.itemsPerColumn]);
 
   useLayoutEffect(() => {
     const measureColumns = () => {
@@ -165,7 +217,10 @@ export default function Images() {
             const col = Number(column.dataset.columnTrack);
             const columnHeight =
               columnHeightsRef.current[col] || layout.sheetHeight;
-            const y = EDGE_GAP + wrap(current.current.y, columnHeight + GAP);
+            const staggerOffset = col % 2 === 1 ? columnHeight * 0.25 : 0;
+            const y =
+              EDGE_GAP +
+              wrap(current.current.y + staggerOffset, columnHeight + GAP);
 
             column.style.transform = `translate3d(0, ${y}px, 0)`;
           });
@@ -206,12 +261,12 @@ export default function Images() {
       if (!hasDragged.current && tileElement) {
         const itemIndex = Number(tileElement.dataset.itemIndex);
 
-        if (Number.isInteger(itemIndex) && GALLERY_ITEMS[itemIndex]) {
-          expandTile(GALLERY_ITEMS[itemIndex], tileElement);
+        if (Number.isInteger(itemIndex) && galleryItems[itemIndex]) {
+          expandTile(galleryItems[itemIndex], tileElement);
         }
       }
     },
-    [expandTile],
+    [expandTile, galleryItems],
   );
 
   const closeExpandedImage = useCallback(() => {
@@ -337,11 +392,24 @@ export default function Images() {
       <ImagePlane
         columnHeights={columnHeights}
         columns={columns}
+        isLoading={isLoading}
         layout={layout}
         onImageLoad={handleImageLoad}
         onTileKeyDown={handleTileKeyDown}
         planeRef={planeRef}
       />
+
+      {!isLoading && loadError ? (
+        <div className="pointer-events-none absolute inset-0 grid place-items-center px-6 text-center text-sm text-muted-foreground">
+          {loadError}
+        </div>
+      ) : null}
+
+      {!isLoading && !loadError && !galleryItems.length ? (
+        <div className="pointer-events-none absolute inset-0 grid place-items-center px-6 text-center text-sm text-muted-foreground">
+          No images yet.
+        </div>
+      ) : null}
 
       {expandedImage ? (
         <ExpandedImageView

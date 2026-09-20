@@ -1,4 +1,4 @@
-import { COLUMNS_BY_BREAKPOINT, GALLERY_ITEMS } from "@/constants/images";
+import { COLUMNS_BY_BREAKPOINT } from "@/constants/images";
 import type { Bounds, ExpandedImage, GalleryItem } from "@/types/image";
 
 export const wrap = (value: number, size: number) =>
@@ -33,16 +33,25 @@ export const getColumnCount = () => {
   return COLUMNS_BY_BREAKPOINT.base;
 };
 
-export const pickItemIndex = (col: number, index: number) => {
-  return Math.abs(col * 7 + index * 5 + col * index) % GALLERY_ITEMS.length;
+export const pickItemIndex = (
+  col: number,
+  row: number,
+  columnCount: number,
+  itemCount: number,
+) => {
+  if (!itemCount) return 0;
+
+  // Lay items out row-major so a viewport-sized group of tiles never repeats
+  // an image just because it happens to land in a different column.
+  return (row * columnCount + col) % itemCount;
 };
 
 export const getItemLabel = (item: GalleryItem) => {
-  return [item.description, item.location].filter(Boolean).join(", ");
+  return item.location ?? "";
 };
 
 export const hasItemMetadata = (item: GalleryItem) => {
-  return Boolean(item.description || item.location);
+  return Boolean(item.location);
 };
 
 export const getExpandedImageTransform = (expandedImage: ExpandedImage) => {

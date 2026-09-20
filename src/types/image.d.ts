@@ -9,8 +9,8 @@ export type Bounds = {
 
 export type GalleryItem = {
   image: string;
-  description?: string;
   location?: string;
+  aspectRatio?: number;
 };
 
 export type GalleryTile = {

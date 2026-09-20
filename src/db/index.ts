@@ -1,0 +1,25 @@
+import { neon } from "@neondatabase/serverless";
+import { drizzle } from "drizzle-orm/neon-http";
+
+import * as schema from "./schema";
+
+type Database = ReturnType<typeof drizzle<typeof schema>>;
+
+let database: Database | null = null;
+
+export function getDb() {
+  if (database) {
+    return database;
+  }
+
+  const databaseUrl = process.env.DATABASE_URL;
+
+  if (!databaseUrl) {
+    throw new Error("DATABASE_URL is required to connect to Postgres.");
+  }
+
+  const sql = neon(databaseUrl);
+  database = drizzle(sql, { schema });
+
+  return database;
+}

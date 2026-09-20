@@ -120,15 +120,6 @@ export default function ExpandedImageView({
                 {expandedImage.item.location}
               </p>
             ) : null}
-            {expandedImage.item.description ? (
-              <h1
-                className={`text-4xl font-semibold leading-none tracking-normal text-zinc-950 dark:text-white md:text-5xl ${
-                  expandedImage.item.location ? "mt-3" : ""
-                }`}
-              >
-                {expandedImage.item.description}
-              </h1>
-            ) : null}
           </aside>
         ) : null}
       </section>

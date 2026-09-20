@@ -9,6 +9,7 @@ type ImagePlaneProps = {
   columnHeights: number[];
   columns: GalleryTile[][];
   layout: GalleryLayout;
+  isLoading?: boolean;
   onImageLoad: () => void;
   onTileKeyDown: (
     event: KeyboardEvent<HTMLElement>,
@@ -21,6 +22,7 @@ export default function ImagePlane({
   columnHeights,
   columns,
   layout,
+  isLoading = false,
   onImageLoad,
   onTileKeyDown,
   planeRef,
@@ -73,6 +75,7 @@ export default function ImagePlane({
                 >
                   {column.map((tile) => (
                     <ImageItem
+                      isSkeleton={isLoading}
                       key={`${copyX}:${col}:${columnCopy}:${tile.id}`}
                       maxHeight={layout.colWidth * 1.58}
                       onImageLoad={onImageLoad}
