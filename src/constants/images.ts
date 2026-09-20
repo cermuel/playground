@@ -7,7 +7,6 @@ export const COLUMNS_BY_BREAKPOINT = {
   lg: 5,
 };
 
-export const MAX_SHEET_COLUMNS = 10;
 export const GAP = 12;
 export const EDGE_GAP = 16;
 export const SHEET_COPIES = [-1, 0, 1];
