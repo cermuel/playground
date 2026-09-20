@@ -36,19 +36,6 @@ export const getColumnCount = () => {
   return COLUMNS_BY_BREAKPOINT.base;
 };
 
-export const pickItemIndex = (
-  col: number,
-  row: number,
-  columnCount: number,
-  itemCount: number,
-) => {
-  if (!itemCount) return 0;
-
-  // Lay items out row-major so a viewport-sized group of tiles never repeats
-  // an image just because it happens to land in a different column.
-  return (row * columnCount + col) % itemCount;
-};
-
 export const getMasonryTileHeight = (id: string, maxHeight: number) => {
   const hash = Array.from(id).reduce(
     (value, character) => (value * 31 + character.charCodeAt(0)) % 997,

@@ -29,7 +29,6 @@ import type {
 import {
   fitImageRect,
   getColumnCount,
-  pickItemIndex,
   toBounds,
   wrap,
 } from "@/utils/image.helpers";
@@ -96,8 +95,8 @@ export default function Images() {
         (window.innerWidth - EDGE_GAP * 2 - GAP * (columns - 1)) / columns;
       const sheetWidth = columns * colWidth + GAP * (columns - 1);
       const itemsPerColumn = Math.max(
-        10,
-        Math.ceil(window.innerHeight / colWidth) * 3,
+        4,
+        Math.ceil(window.innerHeight / colWidth),
       );
 
       setLayout(() => ({
@@ -126,22 +125,28 @@ export default function Images() {
 
     if (!items.length) return [];
 
-    return Array.from({ length: layout.columns }, (_, col) => {
-      return Array.from({ length: layout.itemsPerColumn }, (_, index) => {
-        const itemIndex = pickItemIndex(
-          col,
-          index,
-          layout.columns,
-          items.length,
-        );
+    const minimumTileCount = layout.columns * layout.itemsPerColumn;
+    const tileCount = isLoading
+      ? minimumTileCount
+      : Math.max(items.length, minimumTileCount);
+    const nextColumns: GalleryTile[][] = Array.from(
+      { length: layout.columns },
+      () => [],
+    );
 
-        return {
-          id: `${col}-${index}`,
-          item: items[itemIndex],
-          itemIndex,
-        } satisfies GalleryTile;
+    for (let slot = 0; slot < tileCount; slot += 1) {
+      const col = slot % layout.columns;
+      const row = Math.floor(slot / layout.columns);
+      const itemIndex = slot % items.length;
+
+      nextColumns[col].push({
+        id: `${col}-${row}-${itemIndex}`,
+        item: items[itemIndex],
+        itemIndex,
       });
-    });
+    }
+
+    return nextColumns;
   }, [galleryItems, isLoading, layout.columns, layout.itemsPerColumn]);
 
   useLayoutEffect(() => {
