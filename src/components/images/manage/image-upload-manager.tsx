@@ -1,7 +1,6 @@
 "use client";
 
 import axios from "axios";
-import heic2any from "heic2any";
 import {
   ImagePlus,
   Images,
@@ -11,14 +10,7 @@ import {
   Trash2,
   Upload,
 } from "lucide-react";
-import {
-  ChangeEvent,
-  FormEvent,
-  useCallback,
-  useEffect,
-  useMemo,
-  useState,
-} from "react";
+import { ChangeEvent, FormEvent, useCallback, useMemo, useState } from "react";
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -38,6 +30,7 @@ type LocationOption = {
 };
 
 type ImageUploadManagerProps = {
+  initialImages: ManagedImage[];
   locations: LocationOption[];
 };
 
@@ -99,38 +92,6 @@ function getUploadError(error: unknown) {
   return "Upload failed.";
 }
 
-function isHeicFile(file: File) {
-  return (
-    file.type === "image/heic" ||
-    file.type === "image/heif" ||
-    /\.(?:heic|heif)$/i.test(file.name)
-  );
-}
-
-function getJpegFileName(fileName: string) {
-  return /\.(?:heic|heif)$/i.test(fileName)
-    ? fileName.replace(/\.(?:heic|heif)$/i, ".jpg")
-    : `${fileName}.jpg`;
-}
-
-async function convertHeicToJpeg(file: File) {
-  if (!isHeicFile(file)) {
-    return file;
-  }
-
-  const result = await heic2any({
-    blob: file,
-    quality: 0.9,
-    toType: "image/jpeg",
-  });
-  const convertedBlob = Array.isArray(result) ? result[0] : result;
-
-  return new File([convertedBlob], getJpegFileName(file.name), {
-    lastModified: file.lastModified,
-    type: "image/jpeg",
-  });
-}
-
 function formatImageDate(value: string) {
   return new Intl.DateTimeFormat(undefined, {
     dateStyle: "medium",
@@ -138,13 +99,16 @@ function formatImageDate(value: string) {
   }).format(new Date(value));
 }
 
-export function ImageUploadManager({ locations }: ImageUploadManagerProps) {
+export function ImageUploadManager({
+  initialImages,
+  locations,
+}: ImageUploadManagerProps) {
   const [files, setFiles] = useState<File[]>([]);
-  const [images, setImages] = useState<ManagedImage[]>([]);
+  const [images, setImages] = useState<ManagedImage[]>(initialImages);
   const [locationId, setLocationId] = useState("");
   const [newLocationName, setNewLocationName] = useState("");
   const [deletingImageId, setDeletingImageId] = useState<string | null>(null);
-  const [loadingImages, setLoadingImages] = useState(true);
+  const [loadingImages, setLoadingImages] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState("");
   const [imagesError, setImagesError] = useState<string | null>(null);
@@ -173,10 +137,6 @@ export function ImageUploadManager({ locations }: ImageUploadManagerProps) {
       setLoadingImages(false);
     }
   }, []);
-
-  useEffect(() => {
-    void loadImages();
-  }, [loadImages]);
 
   async function createLocationIfNeeded() {
     if (locationId !== "__new__") {
@@ -213,13 +173,10 @@ export function ImageUploadManager({ locations }: ImageUploadManagerProps) {
       const resolvedLocationId = await createLocationIfNeeded();
 
       for (const [index, file] of files.entries()) {
-        setProgress(`Preparing ${index + 1} of ${files.length}`);
-        const uploadFile = await convertHeicToJpeg(file);
-
         setProgress(`Uploading ${index + 1} of ${files.length}`);
 
         const formData = new FormData();
-        formData.append("file", uploadFile);
+        formData.append("file", file);
 
         const { data: upload } = await axios.post<UploadUrlResponse>(
           "/api/uploads/images/file",
@@ -406,7 +363,7 @@ export function ImageUploadManager({ locations }: ImageUploadManagerProps) {
           </div>
         </CardHeader>
         <CardContent>
-          <div className="grid gap-3">
+          <div className="grid max-h-[70svh] gap-3 overflow-y-auto pr-1">
             {imagesError ? (
               <Alert variant="destructive">
                 <AlertTitle>Images unavailable</AlertTitle>
